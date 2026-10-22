@@ -167,11 +167,13 @@
 
         let origenDetalle = 'buscador'; // Variable para saber de dónde venimos
 
+        
+
         async function rastrear() {
             const busqueda = document.getElementById('busqueda').value.trim();
             const pin = document.getElementById('pin').value.trim();
             const errorMsg = document.getElementById('errorMsg');
-            const btn = document.querySelector('.search-form button');
+            const loader = document.getElementById('loader'); // NUEVO
 
             if (!busqueda || !pin) {
                 errorMsg.style.display = 'block';
@@ -179,10 +181,9 @@
                 return;
             }
 
+            // 1. Mostrar pantalla de carga
             errorMsg.style.display = 'none';
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
-            btn.disabled = true; // Bloquea el botón para que no hagan doble clic
-            btn.style.opacity = '0.7';
+            loader.classList.add('show');
 
             try {
                 const response = await fetch(`${API_URL}?busqueda=${encodeURIComponent(busqueda)}&pin=${encodeURIComponent(pin)}`);
@@ -192,9 +193,13 @@
                     errorMsg.style.display = 'block';
                     errorMsg.textContent = data.error;
                 } else if (data.tipo === 'cliente') {
-                    origenDetalle = 'buscador'; // Reiniciamos el origen
+                    origenDetalle = 'buscador'; 
                     document.getElementById('searchCard').style.display = 'none';
-                    document.getElementById('resultadosLista').style.display = 'block';
+                    
+                    const listaContenedor = document.getElementById('resultadosLista');
+                    listaContenedor.style.display = 'block';
+                    listaContenedor.classList.add('fade-in'); // Animación
+                    
                     document.getElementById('nombreClienteLista').textContent = data.cliente;
                     
                     const listaDiv = document.getElementById('listaGuias');
@@ -204,7 +209,7 @@
                         const isEntregado = g.estado === 'Entregado';
                         const badgeClass = isEntregado ? 'entregado' : 'proceso';
                         listaDiv.innerHTML += `
-                            <div class="guia-card" onclick="verDetalle('${g.guia}', '${pin}')">
+                            <div class="guia-card fade-in" onclick="verDetalle('${g.guia}', '${pin}')">
                                 <div class="guia-info">
                                     <h3>${g.guia}</h3>
                                     <p>${g.cons} · Embarque: ${g.fechaEmbarque}</p>
@@ -218,9 +223,11 @@
                 } else if (data.tipo === 'guia') {
                     document.getElementById('searchCard').style.display = 'none';
                     document.getElementById('resultadosLista').style.display = 'none';
-                    document.getElementById('resultadoDetalle').style.display = 'block';
                     
-                    // Cambiamos el texto del botón volver dependiendo del origen
+                    const detalleContenedor = document.getElementById('resultadoDetalle');
+                    detalleContenedor.style.display = 'block';
+                    detalleContenedor.classList.add('fade-in'); // Animación
+                    
                     const btnVolver = document.querySelector('.btn-volver');
                     if (origenDetalle === 'lista') {
                         btnVolver.innerHTML = '<i class="fas fa-arrow-left"></i> Volver a mis guías';
@@ -234,12 +241,11 @@
                 errorMsg.style.display = 'block';
                 errorMsg.textContent = 'Error de conexión. Intenta de nuevo.';
             } finally {
-                btn.innerHTML = '<i class="fas fa-search"></i> Rastrear';
-                btn.disabled = false;
-                btn.style.opacity = '1';
+                // 2. Ocultar pantalla de carga pase lo que pase
+                loader.classList.remove('show');
             }
         }
-
+        
         function renderizarLineaTiempo(d) {
             document.getElementById('detGuia').textContent = d.guia;
             document.getElementById('detCliente').textContent = d.cons;
